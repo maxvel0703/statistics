@@ -1,0 +1,254 @@
+# statistics code
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Creating a dictionary with banking data
+data = {
+    'Customer_ID': ['C1001', 'C1002', 'C1003', 'C1004', 'C1005', 'C1002', 'C1006', 'C1007', 'C1008', 'C1009', 'C1010'],
+    'Age': [25, 34, 29, 40, 37, 34, 45, 31, 55, 29, 26],
+    'Credit_Score': [720, 680, 650, 800, 710, 680, 820, 640, 590, 850, 610],
+    'Loan_Amount': [5000, 15000, 20000, 300000, 25000, 15000, 500000, 12000, 4000, 100000, 7000],
+    'Transaction_Amount': [200, 5000, 15000, 100000, 8000, 5000, 250000, 3000, 500, 50000, 1200],
+    'Transaction_Date': pd.to_datetime(['2024-01-15', '2024-02-10', '2024-03-05', '2024-04-20', '2024-05-12',
+                                        '2024-02-10', '2024-06-18', '2024-07-08', '2024-08-22', '2024-09-15', '2024-10-05']),
+    'Loan_Type': ['Home Loan', 'Auto Loan', 'Personal Loan', 'Mortgage', 'Business Loan',
+                  'Auto Loan', 'Mortgage', 'Personal Loan', 'Home Loan', 'Mortgage', 'Auto Loan'],
+    'Account_Type': ['Savings', 'Checking', 'Savings', 'Checking', 'Savings',
+                     'Checking', 'Checking', 'Savings', 'Savings', 'Checking', 'Savings'],
+    'Income': [50000, 70000, 65000, 120000, 85000, 70000, 200000, 60000, 40000, 150000, 48000]
+}
+
+# Creating DataFrame
+df = pd.DataFrame(data)
+
+# Removing duplicates
+df = df.drop_duplicates()
+
+# Removing outliers using IQR method
+numeric_cols = ['Credit_Score', 'Loan_Amount', 'Transaction_Amount', 'Income']
+for col in numeric_cols:
+    Q1 = df[col].quantile(0.25)
+    Q3 = df[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    df = df[(df[col] >= lower_bound) & (df[col] <= upper_bound)]
+
+# Grouping by Loan Type and calculating mean loan amount and mean credit score
+grouped_df = df.groupby('Loan_Type')[['Loan_Amount', 'Credit_Score']].mean().reset_index()
+
+# Summing Loan Amount per Loan Type and sorting in descending order
+total_loan_type = df.groupby('Loan_Type')['Loan_Amount'].sum().sort_values(ascending=False)
+
+# Visualizing total loan amount per loan type using a bar plot
+plt.figure(figsize=(10, 6))
+total_loan_type.plot(kind='bar', color='skyblue')
+plt.xlabel("Loan Type")
+plt.ylabel("Total Loan Amount")
+plt.title("Total Loan Amount by Loan Type")
+plt.xticks(rotation=45)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+# Finding correlation between numeric columns
+plt.figure(figsize=(8, 6))
+numeric_df = df.select_dtypes(include=['number'])  # Selecting only numeric columns
+corr_matrix = numeric_df.corr()
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
+plt.title("Correlation Matrix")
+plt.show()
+
+# Saving as CSV
+df.to_csv('banking_data.csv', index=False)
+
+print("Duplicate rows and outliers removed. Grouped data by Loan_Type. Loan amount summed, sorted, and visualized. Correlation matrix generated. Dummy banking dataset saved as 'banking_data.csv'.")
+
+Understanding the Correlation Matrix 📊
+
+Correlation values range from -1 to 1:
+
+    1 → Perfect positive correlation (both variables increase together).
+    -1 → Perfect negative correlation (one increases, the other decreases).
+    0 → No correlation.
+
+Key Insights from Your Heatmap
+
+    Loan_Amount & Income (0.95) → Strong positive correlation
+        Higher-income individuals tend to take larger loans.
+        This makes sense since banks offer higher credit limits to high-income customers.
+
+    Loan_Amount & Transaction_Amount (0.82) → Strong positive correlation
+        Customers with larger loans also tend to have larger financial transactions.
+
+    Credit_Score & Income (0.63) → Moderate positive correlation
+        Higher-income customers generally have better credit scores.
+
+    Credit_Score & Loan_Amount (0.44) → Weak positive correlation
+        Customers with higher credit scores may qualify for larger loans, but it's not a strong factor.
+
+    Age & Credit_Score (-0.45) → Moderate negative correlation
+        Younger people might have lower credit scores due to shorter credit history.
+
+    Age & Loan_Amount (-0.13) → Weak negative correlation
+        Older customers do not necessarily take larger loans.
+
+Conclusions:
+
+    Income is the strongest factor in determining loan amounts.
+    Credit Score is linked to income and loan eligibility but not as strongly as income.
+    Age does not play a major role in determining loan amounts but may slightly affect credit scores.
+
+#visualization on correlation
+# Importing necessary libraries
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Scatter plot: Loan Amount vs Income
+plt.figure(figsize=(8, 5))
+sns.scatterplot(x=df['Income'], y=df['Loan_Amount'], color='blue')
+plt.xlabel('Income')
+plt.ylabel('Loan Amount')
+plt.title('Loan Amount vs Income')
+plt.show()
+
+# Scatter plot: Credit Score vs Loan Amount
+plt.figure(figsize=(8, 5))
+sns.scatterplot(x=df['Credit_Score'], y=df['Loan_Amount'], color='red')
+plt.xlabel('Credit Score')
+plt.ylabel('Loan Amount')
+plt.title('Credit Score vs Loan Amount')
+plt.show()
+
+#standard deviation
+# Calculating standard deviation for all numeric columns
+std_values = df.std()
+print(std_values)
+
+print("Loan Amount Standard Deviation:", df['Loan_Amount'].std())
+If std is very high, some customers have much larger loan amounts than others.
+If std is low, most loan amounts are similar.
+
+If std is very high, some customers have much larger loan amounts than others.
+If std is low, most loan amounts are similar.
+
+t-test (Independent Samples t-test)
+
+    Use case: Comparing the means of two groups (e.g., "Home Loan" vs. "Auto Loan" Loan Amounts).
+    Requirement: The data should be normally distributed.
+    Sample size: Works well for small samples (n < 30 per group).
+
+Example: Comparing Loan Amounts for Two Loan Types
+from scipy.stats import ttest_ind
+
+# Extracting loan amounts for two loan types
+loan1 = df[df['Loan_Type'] == 'Home Loan']['Loan_Amount']
+loan2 = df[df['Loan_Type'] == 'Auto Loan']['Loan_Amount']
+
+# Performing t-test
+t_stat, p_value = ttest_ind(loan1, loan2, equal_var=False)
+print(f"T-test Statistic: {t_stat}, P-value: {p_value}")
+
+# Interpretation
+if p_value < 0.05:
+    print("Significant difference in loan amounts between Home Loan and Auto Loan.")
+else:
+    print("No significant difference in loan amounts.")
+
+
+z-test (For Large Samples)
+
+    Use case: Similar to the t-test but for large datasets (n > 30 per group).
+    Requirement: Data should be normally distributed with known population standard deviation.
+
+Since your dataset is small, the t-test is more appropriate. But for larger datasets, you can use the statsmodels library.
+Example: Comparing Income for Two Account Types
+from statsmodels.stats.weightstats import ztest
+
+# Extracting incomes for two account types
+income1 = df[df['Account_Type'] == 'Savings']['Income']
+income2 = df[df['Account_Type'] == 'Checking']['Income']
+
+# Performing z-test
+z_stat, p_value = ztest(income1, income2)
+print(f"Z-test Statistic: {z_stat}, P-value: {p_value}")
+
+# Interpretation
+if p_value < 0.05:
+    print("Significant difference in income between Savings and Checking account holders.")
+else:
+    print("No significant difference in income.")
+
+
+ANOVA (Analysis of Variance)
+
+    Use case: Comparing three or more groups (e.g., comparing loan amounts across all loan types).
+    Requirement: Normally distributed data in each group & equal variance.
+
+Example: Comparing Loan Amounts Across All Loan Types
+from scipy.stats import f_oneway
+
+# Creating loan amount groups based on Loan Type
+groups = [df[df['Loan_Type'] == loan]['Loan_Amount'] for loan in df['Loan_Type'].unique()]
+
+# Performing ANOVA
+f_stat, p_value = f_oneway(*groups)
+print(f"ANOVA F-statistic: {f_stat}, P-value: {p_value}")
+
+# Interpretation
+if p_value < 0.05:
+    print("Significant difference in loan amounts across different loan types.")
+else:
+    print("No significant difference in loan amounts across loan types.")
+
+
+
+Test	When to Use?	Example in Your Data
+t-test	Compare two groups	Home Loan vs. Auto Loan (Loan Amount)
+z-test	Compare two groups (large sample)	Savings vs. Checking (Income)
+ANOVA	Compare 3+ groups	Loan Amount across all Loan Types
+
+
+What is Variance?
+
+Variance is a statistical measure that tells us how spread out the data is around the mean. It calculates the average squared difference between each value and the mean.
+Why is Variance Important?
+
+    Identifies Data Spread:
+        High variance → Data points are far from the mean (more variation).
+        Low variance → Data points are close to the mean (less variation).
+    Used in Machine Learning & Finance:
+        Helps detect risk in financial investments.
+        Used in statistical tests like t-test, z-test, ANOVA.
+
+How to Calculate Variance in Pandas?
+
+Pandas has a built-in .var() function to compute variance.
+Example: Calculate Variance for Loan Amount
+
+loan_variance = df['Loan_Amount'].var()
+print("Variance of Loan Amount:", loan_variance)
+
+If the variance is very high, it means some customers take very large loans while others take small loans.
+Interpreting Variance in Your Data
+
+Let’s calculate variance for all numeric columns:
+
+numeric_variance = df.var()
+print(numeric_variance)
+
+You can compare variance values across different features to identify which features have the most spread.
+Visualizing Variance with Boxplots
+
+Boxplots help see variance and outliers:
+
+plt.figure(figsize=(8,5))
+sns.boxplot(data=df[['Loan_Amount', 'Income', 'Transaction_Amount']], palette="coolwarm")
+plt.title("Variance Visualization using Boxplot")
+plt.show()
+
+    If the box is wide → High variance.
+    If the box is tight → Low variance.
+    Dots outside the whiskers → Outliers.
